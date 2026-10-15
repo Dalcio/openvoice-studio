@@ -118,7 +118,8 @@ def run_selftest() -> dict:
                     if j["status"] in {"done", "error"}:
                         break
                 assert j["status"] == "done", j.get("error")
-                wav = httpx.get(f"{base}{j['result']['audio_url']}?token={token}")
+                assert j["progress"]["percent"] == 100 and j["progress"]["eta_seconds"] == 0, j["progress"]
+                wav =httpx.get(f"{base}{j['result']['audio_url']}?token={token}")
                 assert wav.status_code == 200 and wav.content[:4] == b"RIFF", "áudio"
                 ev = httpx.post(f"{base}/api/evaluate", headers=h, json={"job_id": job["job_id"]}).json()
                 for _ in range(60):

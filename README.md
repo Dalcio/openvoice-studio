@@ -14,6 +14,7 @@ the command line, or Claude (via MCP). Everything runs on your computer. No audi
 - **Voice creation with guard rails**: upload WAV/MP3/M4A or record in the browser while reading a guided script. A recording check reports speech time, level, noise (SNR) and clipping, and gives guidance in plain language. A voice is only created after an explicit consent statement, which is stored with it.
 - **Narration**: Portuguese-aware text preparation (numbers, € / Kz / %), sentence chunking with style-controlled pauses, automatic retry of garbled takes, and loudness normalisation to -18 LUFS. Four styles: `documental`, `natural`, `didactico`, `energetico`.
 - **Evaluation**: speaker similarity (the engine's speaker encoder, reference vs. output), intelligibility (local faster-whisper transcription → WER/CER), pace, loudness and pauses, plus warnings.
+- **Progress you can follow**: every job reports a percentage, the current stage and the time left. Within each sentence the engine counts real speech tokens and diffusion steps, and time left is calibrated on this machine's measured speed.
 - **One model in memory**: the web UI, the API and every MCP client share one local server and one job queue.
 - **Engine**: [Chatterbox Multilingual](https://github.com/resemble-ai/chatterbox) by Resemble AI. It is MIT-licensed (code and weights), supports 23 languages including Portuguese, and runs on CPU, CUDA or Apple MPS. Its outputs carry Resemble's imperceptible PerTh watermark.
 

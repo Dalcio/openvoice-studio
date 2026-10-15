@@ -57,7 +57,7 @@ A primeira vez demora mais porque carrega o modelo. O `voice_id` aparece na sec�
 
 ## 4. Gerar uma narração (secção "4. Narração")
 
-Escolhe a voz e o estilo (secção 3), escreve o texto e carrega em **Gerar narração**. No CPU de um portátil, cada 10 s de áudio demoram cerca de 1 a 2 minutos. Para teres métricas de semelhança e de clareza, carrega em **Avaliar**.
+Escolhe a voz e o estilo (secção 3), escreve o texto e carrega em **Gerar narração**. Durante a geração vês a percentagem, a frase em curso e o tempo que falta. No CPU de um portátil, cada 10 s de áudio demoram cerca de 1 a 2 minutos. Para teres métricas de semelhança e de clareza, carrega em **Avaliar**.
 
 ## 5. Usar a partir do Claude (MCP)
 
@@ -78,7 +78,7 @@ Deve aparecer `openvoice-studio … Connected`. Depois abre uma **sessão nova**
 | `openvoice-studio` não é reconhecido | Abre um terminal novo, ou corre `uv tool update-shell` |
 | `doctor` diz `engine_models: false` | `openvoice-studio setup --yes` |
 | A gravação não começa | Carrega no cadeado da barra de endereço e permite o microfone |
-| A voz não se parece contigo | Grava mais 30–60 s num local mais silencioso e cria a voz outra vez |
+| A voz não se parece contigo | O modelo usa só ~10 s da gravação para clonar: grava de novo perto do microfone (15–20 cm), num sítio sem ruído nem eco, no mesmo tom que queres nas narrações, e cria a voz outra vez |
 | A porta 8765 está ocupada | `openvoice-studio ui --port 8777` |
 
 ## Uso responsável

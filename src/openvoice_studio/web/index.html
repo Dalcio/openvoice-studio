@@ -70,7 +70,7 @@ code, .mono { font-family: var(--mono); font-size: 13px; }
 .voice-row .name { font-weight: 600; }
 .pill { font-size: 12px; padding: 2px 8px; border-radius: 99px; background: var(--bg); border: 1px solid var(--line); color: var(--muted); }
 .progress { height: 8px; background: var(--line); border-radius: 6px; overflow: hidden; margin-top: 10px; }
-.progress > div { height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+.progress > div { height: 100%; width: 0; background: var(--accent); transition: width .6s linear; }
 .muted { color: var(--muted); }
 audio.out { width: 100%; margin-top: 12px; }
 .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-top: 12px; }
@@ -91,7 +91,9 @@ audio.out { width: 100%; margin-top: 12px; }
 
   <section id="s1">
     <h2>1. Voz</h2>
-    <p class="hint">Cria a tua voz a partir de 1 a 3 minutos de gravação: uma só pessoa, sem música, num local silencioso.</p>
+    <p class="hint">Cria a tua voz a partir de 1 a 3 minutos de gravação: uma só pessoa, sem música, num local silencioso.
+      O modelo só "ouve" cerca de 10 s da tua voz para a clonar, por isso a qualidade desses segundos decide a semelhança:
+      fala no mesmo tom e ritmo que queres nas narrações, com o microfone perto (15–20 cm) e sem eco (uma sala com cortinas ou roupa ajuda).</p>
     <label for="vname">Nome da voz</label>
     <input id="vname" type="text" value="A minha voz" maxlength="60">
     <div class="cols" style="margin-top:14px">
@@ -178,6 +180,14 @@ const el = (tag, attrs = {}, ...kids) => {
   return n;
 };
 const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+const fmtEta = (s) => s == null ? "" : s < 60 ? ` · faltam ~${Math.max(1, Math.round(s))} s` : ` · faltam ~${Math.floor(s / 60)} min ${String(Math.round(s % 60)).padStart(2, "0")} s`;
+const pctOf = (j) => { const p = j.progress || {}; return p.percent != null ? p.percent : (p.total ? (100 * p.done) / p.total : 0); };
+function showProgress(barId, stateId, j) {
+  const pct = pctOf(j);
+  const bar = $(barId); bar.style.display = "block";
+  bar.firstElementChild.style.width = Math.max(2, pct) + "%";
+  $(stateId).textContent = `${Math.round(pct)}% · ${j.stage}${fmtEta((j.progress || {}).eta_seconds)}`;
+}
 
 let TOKEN = new URLSearchParams(location.hash.slice(1)).get("token") || "";
 try { if (TOKEN) sessionStorage.setItem("ovs_token", TOKEN); else TOKEN = sessionStorage.getItem("ovs_token") || ""; } catch (e) {}
@@ -194,7 +204,7 @@ const audioUrl = (p) => p + (p.includes("?") ? "&" : "?") + "token=" + encodeURI
 
 async function waitJob(id, onTick) {
   for (;;) {
-    const j = await api(`/api/jobs/${id}?wait=10`);
+    const j = await api(`/api/jobs/${id}?wait=1`);
     onTick && onTick(j);
     if (j.status === "done" || j.status === "error") return j;
   }
@@ -330,7 +340,7 @@ $("#createBtn").addEventListener("click", async () => {
     $("#prepBar").style.display = "block";
     $("#createState").textContent = "A preparar a voz… (a 1.ª vez carrega o modelo, pode levar alguns minutos)";
     await refreshVoices(id);
-    const j = await waitJob(r.prepare_job.job_id, (j) => { $("#createState").textContent = j.stage + "…"; $("#prepBar").firstElementChild.style.width = j.status === "done" ? "100%" : "40%"; });
+    const j = await waitJob(r.prepare_job.job_id, (j) => showProgress("#prepBar", "#createState", j));
     $("#prepBar").style.display = "none";
     if (j.status === "done") {
       $("#createState").textContent = "";
@@ -369,15 +379,11 @@ $("#genBtn").addEventListener("click", async () => {
   if (!voice_id) { $("#genOut").replaceChildren(msgBox("bad", "Cria ou escolhe uma voz primeiro.")); return; }
   const style = (document.querySelector("input[name=style]:checked") || {}).value;
   $("#genBtn").disabled = true; $("#genOut").innerHTML = ""; $("#genBar").style.display = "block";
-  const bar = $("#genBar").firstElementChild; bar.style.width = "3%";
+  $("#genBar").firstElementChild.style.width = "2%"; $("#genState").textContent = "0% · na fila";
   try {
     const job = await api("/api/generate", { method: "POST", headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ voice_id, text: $("#text").value, style, language: $("#lang").value }) });
-    const j = await waitJob(job.job_id, (j) => {
-      const p = j.progress || {}; const pct = p.total ? Math.max(5, (100 * p.done) / p.total) : 3;
-      bar.style.width = pct + "%";
-      $("#genState").textContent = `${j.stage}${p.total ? ` (${p.done}/${p.total} frases)` : ""}…`;
-    });
+    const j = await waitJob(job.job_id, (j) => showProgress("#genBar", "#genState", j));
     $("#genBar").style.display = "none"; $("#genState").textContent = "";
     if (j.status !== "done") throw new Error(j.error || "falhou");
     const r = j.result;
@@ -400,7 +406,7 @@ async function evaluate(jobId, btn) {
   btn.disabled = true; $("#evalOut").replaceChildren(el("p", { class: "muted" }, "A avaliar… (semelhança e transcrição)"));
   try {
     const job = await api("/api/evaluate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ job_id: jobId }) });
-    const j = await waitJob(job.job_id);
+    const j = await waitJob(job.job_id, (j) => { $("#evalOut").replaceChildren(el("p", { class: "muted" }, `${Math.round(pctOf(j))}% · ${j.stage}…`)); });
     if (j.status !== "done") throw new Error(j.error || "falhou");
     const m = j.result.metrics;
     const card = (v, l) => el("div", { class: "metric" }, el("b", {}, v ?? "—"), el("span", {}, l));

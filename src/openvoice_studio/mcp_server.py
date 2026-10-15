@@ -85,7 +85,11 @@ def _job_view(job: dict) -> dict:
     if job.get("result"):
         view["result"] = job["result"]
     if job["status"] in {"queued", "running"}:
-        view["next_step"] = f"Still running. Call get_job_status(job_id='{job['job_id']}', wait_seconds=120)."
+        p = job.get("progress") or {}
+        eta = p.get("eta_seconds")
+        view["next_step"] = (f"Still running: {p.get('percent', 0):.0f}% ({job.get('stage')})"
+                             + (f", about {eta} s left" if eta is not None else "")
+                             + f". Call get_job_status(job_id='{job['job_id']}', wait_seconds=120).")
     return view
 
 

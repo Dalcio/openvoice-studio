@@ -34,7 +34,7 @@ class SelftestEngine(Engine):
         wav, sr = audio.read(samples_wav)
         (voice_dir / "selftest.json").write_text(json.dumps({"f0": _estimate_f0(wav, sr)}), encoding="utf-8")
 
-    def synthesize(self, text: str, voice_dir: Path, language: str, params: dict) -> np.ndarray:
+    def synthesize(self, text: str, voice_dir: Path, language: str, params: dict, progress=None) -> np.ndarray:
         meta = voice_dir / "selftest.json"
         f0 = json.loads(meta.read_text(encoding="utf-8"))["f0"] if meta.exists() else 140.0
         sr = self.sample_rate
@@ -48,6 +48,8 @@ class SelftestEngine(Engine):
                 out.append(audio.silence(0.15, sr))
             elif ch == " ":
                 out.append(audio.silence(0.03, sr))
+        if progress:
+            progress(1.0)
         return np.concatenate(out) if out else audio.silence(0.2, sr)
 
     def speaker_embedding(self, wav: np.ndarray, sr: int) -> np.ndarray:

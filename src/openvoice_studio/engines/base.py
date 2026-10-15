@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from pathlib import Path
+from typing import Callable
 
 import numpy as np
 
@@ -39,8 +40,10 @@ class Engine(ABC):
         """Compute and cache whatever the engine needs to speak with this voice."""
 
     @abstractmethod
-    def synthesize(self, text: str, voice_dir: Path, language: str, params: dict) -> np.ndarray:
-        """Return float32 mono audio at self.sample_rate for one chunk of text."""
+    def synthesize(self, text: str, voice_dir: Path, language: str, params: dict,
+                   progress: Callable[[float], None] | None = None) -> np.ndarray:
+        """Return float32 mono audio at self.sample_rate for one chunk of text.
+        `progress(fraction)` may be called with 0..1 while the chunk is being generated."""
 
     @abstractmethod
     def speaker_embedding(self, wav: np.ndarray, sr: int) -> np.ndarray:

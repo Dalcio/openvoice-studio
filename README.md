@@ -1,5 +1,7 @@
 # OpenVoice Studio
 
+![OpenVoice Studio: clone your own voice and narrate anything, entirely on your computer](docs/cover.png)
+
 Local-first, open-source voice cloning & narration engine with a web UI, an HTTP API and an MCP server.
 Record or upload 1–3 minutes of your own voice, then generate narration with it from the browser,
 the command line, or Claude (via MCP). Everything runs on your computer. No audio leaves it, and it costs 0 €.

@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OpenVoice Studio cover</title>
+<style>
+  html, body { margin: 0; width: 1280px; height: 640px; overflow: hidden; }
+  body {
+    background: radial-gradient(1200px 700px at 85% 110%, #0f3d36 0%, rgba(15,61,54,0) 60%),
+                radial-gradient(900px 600px at 0% 0%, #1a2240 0%, rgba(26,34,64,0) 55%),
+                #0b0e14;
+    color: #eef1f5;
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+    position: relative;
+  }
+  .wrap { position: absolute; left: 88px; top: 92px; width: 640px; }
+  .kicker { font-size: 20px; letter-spacing: .18em; text-transform: uppercase; color: #3ccfae; font-weight: 600; }
+  h1 { font-size: 84px; line-height: 1.02; margin: 18px 0 22px; letter-spacing: -0.02em; font-weight: 750; }
+  h1 span { color: #3ccfae; }
+  p { font-size: 28px; line-height: 1.4; color: #b9c2cf; margin: 0; }
+  .chips { position: absolute; left: 88px; bottom: 84px; display: flex; gap: 14px; }
+  .chip { font-size: 20px; padding: 10px 18px; border-radius: 999px; border: 1px solid #2a3442; background: rgba(255,255,255,.04); color: #d7dee8; }
+  .chip b { color: #3ccfae; font-weight: 600; }
+  svg.wave { position: absolute; right: 70px; top: 120px; }
+  .mic { position: absolute; right: 252px; top: 236px; width: 92px; height: 92px; border-radius: 50%;
+         background: #3ccfae; box-shadow: 0 0 0 14px rgba(60,207,174,.14), 0 0 0 30px rgba(60,207,174,.06); }
+  .mic svg { position: absolute; left: 22px; top: 18px; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="kicker">Open source voice studio</div>
+    <h1>OpenVoice<br><span>Studio</span></h1>
+    <p>Clone your own voice and narrate anything, entirely on your computer.</p>
+  </div>
+
+  <svg class="wave" width="460" height="330" viewBox="0 0 460 330" aria-hidden="true">
+    <g fill="#3ccfae">
+      <!-- symmetric waveform bars -->
+      <rect x="0"   y="150" width="12" height="30"  rx="6" opacity=".35"/>
+      <rect x="24"  y="132" width="12" height="66"  rx="6" opacity=".45"/>
+      <rect x="48"  y="110" width="12" height="110" rx="6" opacity=".55"/>
+      <rect x="72"  y="80"  width="12" height="170" rx="6" opacity=".7"/>
+      <rect x="96"  y="118" width="12" height="94"  rx="6" opacity=".6"/>
+      <rect x="120" y="60"  width="12" height="210" rx="6" opacity=".85"/>
+      <rect x="144" y="96"  width="12" height="138" rx="6" opacity=".7"/>
+      <rect x="312" y="96"  width="12" height="138" rx="6" opacity=".7"/>
+      <rect x="336" y="60"  width="12" height="210" rx="6" opacity=".85"/>
+      <rect x="360" y="118" width="12" height="94"  rx="6" opacity=".6"/>
+      <rect x="384" y="80"  width="12" height="170" rx="6" opacity=".7"/>
+      <rect x="408" y="110" width="12" height="110" rx="6" opacity=".55"/>
+      <rect x="432" y="132" width="12" height="66"  rx="6" opacity=".45"/>
+      <rect x="448" y="150" width="12" height="30"  rx="6" opacity=".35"/>
+    </g>
+  </svg>
+  <div class="mic">
+    <svg width="48" height="56" viewBox="0 0 24 28" fill="none" stroke="#0b0e14" stroke-width="2.4" stroke-linecap="round">
+      <rect x="7" y="2" width="10" height="15" rx="5" fill="#0b0e14"/>
+      <path d="M3 13a9 9 0 0 0 18 0M12 22v4"/>
+    </svg>
+  </div>
+
+  <div class="chips">
+    <div class="chip"><b>Local</b> and private</div>
+    <div class="chip"><b>MCP</b> server for Claude</div>
+    <div class="chip"><b>HTTP</b> API</div>
+    <div class="chip"><b>MIT</b> licensed</div>
+  </div>
+</body>
+</html>

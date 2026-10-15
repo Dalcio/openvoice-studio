@@ -123,7 +123,7 @@ class VoiceStore:
         return {"files": results, "assessment": audio.assess(results)}
 
     def create(self, name: str, files: list[Path], consent: dict, language: str = "pt",
-               default_engine: str = "chatterbox-mtl") -> dict:
+               default_engine: str = "chatterbox-mtl", display_names: list[str] | None = None) -> dict:
         record = validate_consent(consent)
         name = (name or "").strip() or "A minha voz"
         if not files:
@@ -137,7 +137,8 @@ class VoiceStore:
                 wav_path = audio.to_wav(f, vdir / "samples" / f"{i + 1:02d}.wav", SR)
                 wav, _ = audio.read(wav_path)
                 takes.append(wav)
-                analyses.append({"file": Path(f).name, **audio.analyze(wav, SR)})
+                label = display_names[i] if display_names and i < len(display_names) and display_names[i] else Path(f).name
+                analyses.append({"file": label, **audio.analyze(wav, SR)})
             assessment = audio.assess(analyses)
             if not assessment["ok"]:
                 raise ValueError(" ".join(assessment["errors"]))

@@ -122,6 +122,7 @@ def create_app(studio: Studio | None = None, token: str | None = None) -> FastAP
                     name, paths,
                     {"confirmed": consent_confirmed, "owner": consent_owner, "authorized_by": authorized_by},
                     language=language, default_engine=studio.engine_name,
+                    display_names=[f.filename or "" for f in files],
                 )
             except ConsentError as exc:
                 raise err(exc, 422) from exc

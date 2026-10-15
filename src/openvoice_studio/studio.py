@@ -202,7 +202,11 @@ class Studio:
                     pieces.append(audio.silence(sty.pause_paragraph if chunk["pause_after"] == "paragraph" else sty.pause_sentence, sr))
                 self.jobs.update(job_id, progress={"done": i + 1, "total": len(plan)})
             pieces.append(audio.silence(0.25, sr))
-            out = audio.normalize(np.concatenate(pieces), sr, target_lufs=-18.0)
+            mix = np.concatenate(pieces)
+            if eng.name != "selftest":
+                # Light clean-up of residual hiss the model may have copied from the reference.
+                mix = audio.spectral_gate(mix, sr, strength=0.7, n_std=2.0)
+            out = audio.normalize(mix, sr, target_lufs=-18.0)
             path = audio.write(self.out_dir / f"{job_id}.wav", out, sr)
             duration = len(out) / sr
             elapsed = time.monotonic() - t0

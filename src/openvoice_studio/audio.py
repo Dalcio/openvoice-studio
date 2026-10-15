@@ -221,13 +221,55 @@ def split_speech(wav: np.ndarray, sr: int, max_s: float = 8.0, min_s: float = 1.
     return chunks or [wav]
 
 
-CLEAN_FILTER = "highpass=f=80,afftdn=nr=12:nf=-50:tn=1"
+def noise_sample(wav: np.ndarray, sr: int, min_s: float = 0.3) -> np.ndarray | None:
+    """Concatenate the non-speech frames of a recording (digital silence excluded)."""
+    db = frame_db(wav, sr)
+    mask = speech_mask(db)
+    n = int(sr * FRAME_S)
+    idx = np.where(~mask & (db > -100))[0]
+    if len(idx) * FRAME_S < min_s:
+        return None
+    return np.concatenate([wav[i * n : (i + 1) * n] for i in idx])
+
+
+def spectral_gate(wav: np.ndarray, sr: int, strength: float = 0.9, n_std: float = 1.5,
+                  noise: np.ndarray | None = None) -> np.ndarray:
+    """Stationary spectral gating: learn the noise spectrum from the pauses, then attenuate every
+    time-frequency bin that does not rise clearly above it. strength 0.9 = -20 dB on noise bins."""
+    from scipy.ndimage import uniform_filter
+    from scipy.signal import istft, stft
+
+    if noise is None:
+        noise = noise_sample(wav, sr)
+    if noise is None or len(wav) < 2048:
+        return wav
+    n_fft, hop = 1024, 256
+    kw = {"fs": sr, "nperseg": n_fft, "noverlap": n_fft - hop}
+    _, _, nz = stft(noise, **kw)
+    ndb = 20 * np.log10(np.abs(nz) + 1e-10)
+    threshold = ndb.mean(axis=1) + n_std * ndb.std(axis=1)
+    _, _, spec = stft(wav, **kw)
+    sdb = 20 * np.log10(np.abs(spec) + 1e-10)
+    keep = (sdb > threshold[:, None]).astype(np.float32)
+    keep = uniform_filter(keep, size=(3, 7))  # smooth over 3 bins x ~75 ms to avoid "musical" noise
+    gain = 1.0 - strength * (1.0 - keep)
+    _, out = istft(spec * gain, **kw)
+    out = out[: len(wav)].astype(np.float32)
+    return np.pad(out, (0, len(wav) - len(out))) if len(out) < len(wav) else out
+
+
+CLEAN_FILTER = "highpass=f=90,highpass=f=90"  # 4-pole: removes hum/rumble that the gate cannot
+
+
+def clean_wav(wav: np.ndarray, sr: int, strength: float = 0.92, target_lufs: float | None = -20.0) -> np.ndarray:
+    out = spectral_gate(wav, sr, strength=strength)
+    return normalize(out, sr, target_lufs=target_lufs, peak_dbfs=-1.0) if target_lufs is not None else out
 
 
 def clean_take(src: Path, dst: Path, sr: int = 24000, target_lufs: float = -20.0) -> Path:
-    """Prepare a home recording for cloning: cut rumble below 80 Hz, reduce steady background noise
-    (ffmpeg afftdn, moderate 12 dB so the voice keeps its timbre) and bring it to a normal level.
-    The engines copy the acoustics of the reference, so noise and very low levels hurt similarity."""
+    """Prepare a home recording for cloning: cut rumble below 90 Hz, remove steady background noise
+    (hiss, hum, fans) with a spectral gate learned from the pauses, and bring it to a normal level.
+    The engines copy the acoustics of the reference, noise included, into every narration."""
     src, dst = Path(src), Path(dst)
     ff = ffmpeg_path()
     if ff:
@@ -239,7 +281,7 @@ def clean_take(src: Path, dst: Path, sr: int = 24000, target_lufs: float = -20.0
     else:
         wav, in_sr = read(src)
         wav = resample(wav, in_sr, sr)
-    write(dst, normalize(wav, sr, target_lufs=target_lufs, peak_dbfs=-1.0), sr)
+    write(dst, clean_wav(wav, sr, target_lufs=target_lufs), sr)
     return dst
 
 

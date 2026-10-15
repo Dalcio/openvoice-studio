@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="pt">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenVoice Studio</title>
+<style>
+:root {
+  --bg: #f6f5f2; --panel: #ffffff; --ink: #1d1d1f; --muted: #6b6b70; --line: #e3e1dc;
+  --accent: #0f6e5c; --accent-ink: #ffffff; --warn: #9a5b00; --warn-bg: #fff4e0;
+  --bad: #b3261e; --bad-bg: #fdecea; --good: #1e7d32; --good-bg: #e8f5e9; --rec: #d93025;
+  --radius: 12px; --mono: ui-monospace, SFMono-Regular, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #141416; --panel: #1d1d20; --ink: #ececef; --muted: #a0a0a8; --line: #303036;
+    --accent: #3ccfae; --accent-ink: #08201b; --warn: #f2b45a; --warn-bg: #33270f;
+    --bad: #ff8a80; --bad-bg: #3a1714; --good: #81c995; --good-bg: #13291a;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 15px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+header { max-width: 920px; margin: 0 auto; padding: 28px 16px 8px; display: flex; gap: 12px; align-items: baseline; flex-wrap: wrap; }
+header h1 { margin: 0; font-size: 22px; letter-spacing: -0.01em; }
+header .sub { color: var(--muted); }
+#engine { margin-left: auto; font-size: 13px; color: var(--muted); }
+main { max-width: 920px; margin: 0 auto; padding: 8px 16px 64px; display: grid; gap: 16px; }
+section { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px; }
+section h2 { margin: 0 0 4px; font-size: 18px; }
+.hint { color: var(--muted); margin: 0 0 14px; font-size: 14px; }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+@media (max-width: 720px) { .cols { grid-template-columns: 1fr; } }
+.card { border: 1px solid var(--line); border-radius: 10px; padding: 14px; }
+.card h3 { margin: 0 0 6px; font-size: 15px; }
+label { display: block; font-weight: 600; font-size: 14px; margin: 10px 0 4px; }
+input[type=text], select, textarea { width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--bg); color: var(--ink); font: inherit; }
+textarea { min-height: 120px; resize: vertical; }
+button { font: inherit; font-weight: 600; border-radius: 8px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); padding: 8px 14px; cursor: pointer; }
+button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+button.rec { background: var(--rec); color: #fff; border-color: var(--rec); }
+button:disabled { opacity: .45; cursor: not-allowed; }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 12px; }
+.script { background: var(--bg); border-radius: 8px; padding: 12px 14px; font-size: 16px; line-height: 1.7; }
+.script p { margin: 0 0 10px; }
+.meter { flex: 1; min-width: 120px; height: 10px; border-radius: 6px; background: var(--line); overflow: hidden; }
+.meter > div { height: 100%; width: 0; background: var(--good); transition: width .06s; }
+.takes { list-style: none; padding: 0; margin: 10px 0 0; display: grid; gap: 6px; }
+.takes li { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 14px; }
+.takes audio { height: 32px; max-width: 100%; }
+.msg { border-radius: 8px; padding: 10px 12px; margin-top: 12px; font-size: 14px; }
+.msg.good { background: var(--good-bg); color: var(--good); }
+.msg.warn { background: var(--warn-bg); color: var(--warn); }
+.msg.bad { background: var(--bad-bg); color: var(--bad); }
+.msg ul { margin: 6px 0 0; padding-left: 18px; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 10px; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+td.num { font-variant-numeric: tabular-nums; }
+.consent { display: flex; gap: 10px; align-items: flex-start; font-weight: 400; margin-top: 12px; }
+.consent input { margin-top: 4px; }
+.radios { display: flex; gap: 16px; flex-wrap: wrap; font-weight: 400; }
+.radios label { font-weight: 400; display: flex; gap: 6px; align-items: center; margin: 0; }
+.styles { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+.styles label { margin: 0; font-weight: 400; border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; cursor: pointer; }
+.styles input { margin-right: 6px; }
+.styles label:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+.styles small { display: block; color: var(--muted); }
+code, .mono { font-family: var(--mono); font-size: 13px; }
+.voice-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.voice-row:last-child { border-bottom: 0; }
+.voice-row .name { font-weight: 600; }
+.pill { font-size: 12px; padding: 2px 8px; border-radius: 99px; background: var(--bg); border: 1px solid var(--line); color: var(--muted); }
+.progress { height: 8px; background: var(--line); border-radius: 6px; overflow: hidden; margin-top: 10px; }
+.progress > div { height: 100%; width: 0; background: var(--accent); transition: width .3s; }
+.muted { color: var(--muted); }
+audio.out { width: 100%; margin-top: 12px; }
+.metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 8px; margin-top: 12px; }
+.metric { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+.metric b { display: block; font-size: 18px; font-variant-numeric: tabular-nums; }
+.metric span { font-size: 12px; color: var(--muted); }
+#auth { display: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>OpenVoice Studio</h1>
+  <span class="sub">Clonagem de voz e narração, 100% local.</span>
+  <span id="engine">a ligar…</span>
+</header>
+<main>
+  <section id="auth" class="msg bad">Falta o token de acesso no link. Abre o endereço completo mostrado por <code>openvoice-studio ui</code> (termina em <code>#token=…</code>).</section>
+
+  <section id="s1">
+    <h2>1. Voz</h2>
+    <p class="hint">Cria a tua voz a partir de 1 a 3 minutos de gravação: uma só pessoa, sem música, num local silencioso.</p>
+    <label for="vname">Nome da voz</label>
+    <input id="vname" type="text" value="A minha voz" maxlength="60">
+    <div class="cols" style="margin-top:14px">
+      <div class="card">
+        <h3>Opção A — Carregar gravações</h3>
+        <p class="hint">WAV, MP3 ou M4A. Podes escolher vários ficheiros.</p>
+        <input id="files" type="file" accept="audio/*,.wav,.mp3,.m4a,.flac,.ogg,.webm" multiple>
+      </div>
+      <div class="card">
+        <h3>Opção B — Gravar aqui</h3>
+        <p class="hint">Lê o texto abaixo em voz natural, com o microfone a 15–20 cm. Grava 2 a 3 vezes, até perto de 1 minuto no total. O Chrome vai pedir acesso ao microfone: clica em “Permitir”.</p>
+        <div class="row" style="margin-top:0">
+          <button id="recBtn" class="rec">● Gravar</button>
+          <span id="recTime" class="mono">0:00</span>
+          <div class="meter" title="Nível do microfone: deve chegar ao verde/amarelo sem ficar sempre no máximo"><div id="meterBar"></div></div>
+        </div>
+      </div>
+    </div>
+    <div class="script" id="script" style="margin-top:14px"></div>
+    <ul class="takes" id="takes"></ul>
+    <div class="row"><span id="total" class="muted"></span></div>
+    <div class="row">
+      <button id="checkBtn">Verificar gravação</button>
+    </div>
+    <div id="checkOut"></div>
+
+    <label style="margin-top:16px">De quem é esta voz?</label>
+    <div class="radios">
+      <label><input type="radio" name="owner" value="self" checked> É a minha voz</label>
+      <label><input type="radio" name="owner" value="authorized"> É de outra pessoa que me autorizou</label>
+    </div>
+    <div id="authWrap" style="display:none">
+      <label for="authBy">Quem autorizou e como</label>
+      <input id="authBy" type="text" placeholder="Ex.: Maria Silva, autorização escrita de 15/10/2026">
+    </div>
+    <label class="consent"><input id="consent" type="checkbox"> <span id="consentText"></span></label>
+    <div class="row">
+      <button id="createBtn" class="primary" disabled>Criar voz</button>
+      <span id="createState" class="muted"></span>
+    </div>
+    <div class="progress" id="prepBar" style="display:none"><div></div></div>
+    <div id="createOut"></div>
+  </section>
+
+  <section id="s2">
+    <h2>2. As tuas vozes</h2>
+    <p class="hint">O <span class="mono">voice_id</span> é o que usas no Claude (MCP) ou na API.</p>
+    <div id="voices" class="muted">Ainda não há vozes.</div>
+  </section>
+
+  <section id="s3">
+    <h2>3. Estilo</h2>
+    <p class="hint">Define o ritmo e a expressividade da narração.</p>
+    <div class="styles" id="styles"></div>
+    <label for="lang">Idioma</label>
+    <select id="lang"></select>
+  </section>
+
+  <section id="s4">
+    <h2>4. Narração</h2>
+    <p class="hint">Escreve o texto, escolhe a voz e gera. No CPU de um portátil, cada 10 s de áudio demoram cerca de 1 a 2 minutos; a primeira geração também carrega o modelo.</p>
+    <label for="voiceSel">Voz</label>
+    <select id="voiceSel"></select>
+    <label for="text">Texto</label>
+    <textarea id="text">Bem-vindos. Hoje vamos ver, passo a passo, como funciona o OpenVoice Studio, que corre no meu computador e custa 0 €.</textarea>
+    <div class="row"><span id="chars" class="muted"></span></div>
+    <div class="row">
+      <button id="genBtn" class="primary">Gerar narração</button>
+      <span id="genState" class="muted"></span>
+    </div>
+    <div class="progress" id="genBar" style="display:none"><div></div></div>
+    <div id="genOut"></div>
+  </section>
+</main>
+<script>
+"use strict";
+const $ = (s) => document.querySelector(s);
+const el = (tag, attrs = {}, ...kids) => {
+  const n = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") n.className = v; else if (k.startsWith("on")) n.addEventListener(k.slice(2), v); else n.setAttribute(k, v);
+  }
+  for (const k of kids) n.append(k instanceof Node ? k : document.createTextNode(String(k)));
+  return n;
+};
+const fmt = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+
+let TOKEN = new URLSearchParams(location.hash.slice(1)).get("token") || "";
+try { if (TOKEN) sessionStorage.setItem("ovs_token", TOKEN); else TOKEN = sessionStorage.getItem("ovs_token") || ""; } catch (e) {}
+if (!TOKEN) $("#auth").style.display = "block";
+
+async function api(path, opts = {}) {
+  const headers = Object.assign({ Authorization: "Bearer " + TOKEN }, opts.headers || {});
+  const res = await fetch(path, Object.assign({}, opts, { headers }));
+  const body = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(body.detail ? (typeof body.detail === "string" ? body.detail : JSON.stringify(body.detail)) : res.statusText);
+  return body;
+}
+const audioUrl = (p) => p + (p.includes("?") ? "&" : "?") + "token=" + encodeURIComponent(TOKEN);
+
+async function waitJob(id, onTick) {
+  for (;;) {
+    const j = await api(`/api/jobs/${id}?wait=10`);
+    onTick && onTick(j);
+    if (j.status === "done" || j.status === "error") return j;
+  }
+}
+
+function msgBox(kind, title, items = []) {
+  const box = el("div", { class: "msg " + kind }, el("strong", {}, title));
+  if (items.length) box.append(el("ul", {}, ...items.map((t) => el("li", {}, t))));
+  return box;
+}
+
+/* ---------------------------------------------------------------- capabilities */
+let CAPS = null;
+async function loadCaps() {
+  CAPS = await api("/api/capabilities");
+  const e = CAPS.engines[CAPS.default_engine];
+  $("#engine").textContent = `${e.label} · ${e.models_installed ? (e.loaded ? "modelo carregado" : "pronto") : "modelos por instalar"}`;
+  const st = $("#styles"); st.innerHTML = "";
+  for (const [k, s] of Object.entries(CAPS.styles)) {
+    st.append(el("label", {}, el("input", Object.assign({ type: "radio", name: "style", value: k }, k === "documental" ? { checked: "" } : {})), s.label, el("small", {}, s.description)));
+  }
+  const ls = $("#lang"); ls.innerHTML = "";
+  for (const [k, v] of Object.entries(CAPS.languages)) ls.append(el("option", Object.assign({ value: k }, k === "pt" ? { selected: "" } : {}), `${v} (${k})`));
+}
+
+/* ---------------------------------------------------------------- section 1 */
+const takes = []; // {blob, name, seconds, url}
+async function loadScript() {
+  const s = await api("/api/recording-script");
+  $("#script").replaceChildren(...s.paragraphs.map((p) => el("p", {}, p)));
+  $("#consentText").textContent = s.consent_statement;
+}
+function renderTakes() {
+  const ul = $("#takes"); ul.innerHTML = "";
+  takes.forEach((t, i) => {
+    ul.append(el("li", {}, el("span", { class: "pill" }, `Gravação ${i + 1} · ${fmt(t.seconds)}`), el("audio", { controls: "", src: t.url }),
+      el("button", { onclick: () => { URL.revokeObjectURL(t.url); takes.splice(i, 1); renderTakes(); invalidate(); } }, "Remover")));
+  });
+  const recorded = takes.reduce((a, t) => a + t.seconds, 0);
+  const nFiles = $("#files").files.length;
+  $("#total").textContent = takes.length || nFiles ? `Total gravado aqui: ${fmt(recorded)}${nFiles ? ` · ${nFiles} ficheiro(s) carregado(s)` : ""}` : "";
+}
+function collectFiles() {
+  const fd = new FormData();
+  for (const f of $("#files").files) fd.append("files", f, f.name);
+  takes.forEach((t, i) => fd.append("files", t.blob, t.name || `gravacao-${i + 1}.webm`));
+  return fd;
+}
+let checkedOk = false;
+function invalidate() { checkedOk = false; $("#checkOut").innerHTML = ""; updateCreate(); }
+function updateCreate() {
+  const owner = document.querySelector("input[name=owner]:checked").value;
+  $("#authWrap").style.display = owner === "authorized" ? "block" : "none";
+  const authOk = owner === "self" || $("#authBy").value.trim().length > 3;
+  $("#createBtn").disabled = !(checkedOk && $("#consent").checked && authOk);
+}
+$("#files").addEventListener("change", () => { renderTakes(); invalidate(); });
+document.querySelectorAll("input[name=owner]").forEach((r) => r.addEventListener("change", updateCreate));
+$("#authBy").addEventListener("input", updateCreate);
+$("#consent").addEventListener("change", updateCreate);
+
+let rec = null;
+$("#recBtn").addEventListener("click", async () => {
+  if (rec) { rec.stop(); return; }
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false, channelCount: 1 } });
+  } catch (e) {
+    $("#checkOut").replaceChildren(msgBox("bad", "Sem acesso ao microfone.", ["Clica no ícone do cadeado na barra de endereço e permite o microfone para este site.", String(e.message || e)]));
+    return;
+  }
+  const ctx = new AudioContext();
+  const an = ctx.createAnalyser(); an.fftSize = 1024;
+  ctx.createMediaStreamSource(stream).connect(an);
+  const buf = new Float32Array(an.fftSize);
+  const mime = MediaRecorder.isTypeSupported("audio/webm;codecs=opus") ? "audio/webm;codecs=opus" : "";
+  const mr = new MediaRecorder(stream, mime ? { mimeType: mime, audioBitsPerSecond: 128000 } : {});
+  const chunks = []; const t0 = performance.now(); let raf;
+  const tick = () => {
+    an.getFloatTimeDomainData(buf);
+    let peak = 0; for (const v of buf) peak = Math.max(peak, Math.abs(v));
+    const db = 20 * Math.log10(peak + 1e-6);
+    const pct = Math.max(0, Math.min(100, (db + 50) * 2));
+    const bar = $("#meterBar"); bar.style.width = pct + "%";
+    bar.style.background = db > -1 ? "var(--bad)" : db > -12 ? "var(--warn)" : "var(--good)";
+    $("#recTime").textContent = fmt((performance.now() - t0) / 1000);
+    raf = requestAnimationFrame(tick);
+  };
+  mr.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+  mr.onstop = () => {
+    cancelAnimationFrame(raf); stream.getTracks().forEach((t) => t.stop()); ctx.close();
+    const seconds = (performance.now() - t0) / 1000;
+    const blob = new Blob(chunks, { type: mr.mimeType || "audio/webm" });
+    takes.push({ blob, seconds, url: URL.createObjectURL(blob), name: `gravacao-${takes.length + 1}.webm` });
+    rec = null; $("#recBtn").textContent = "● Gravar"; $("#meterBar").style.width = "0";
+    renderTakes(); invalidate();
+  };
+  mr.start(1000); rec = mr; tick();
+  $("#recBtn").textContent = "■ Parar";
+});
+
+$("#checkBtn").addEventListener("click", async () => {
+  const fd = collectFiles();
+  if (![...fd.keys()].length) { $("#checkOut").replaceChildren(msgBox("bad", "Carrega um ficheiro ou grava primeiro.")); return; }
+  $("#checkBtn").disabled = true; $("#checkOut").replaceChildren(el("p", { class: "muted" }, "A analisar…"));
+  try {
+    const r = await api("/api/voices/check", { method: "POST", body: fd });
+    const a = r.assessment;
+    checkedOk = a.ok;
+    const kind = a.status === "bom" ? "good" : a.status === "aceitável" ? "warn" : "bad";
+    const title = `Qualidade: ${a.status} · ${a.total_speech_s} s de fala em ${a.total_duration_s} s gravados`;
+    const out = [msgBox(kind, title, [...a.errors, ...a.warnings, ...a.notes])];
+    out.push(el("table", {}, el("tr", {}, ...["Ficheiro", "Duração", "Fala", "Nível", "Ruído (SNR)", "Clipping"].map((h) => el("th", {}, h))),
+      ...r.files.map((f) => el("tr", {}, el("td", {}, f.file), el("td", { class: "num" }, f.duration_s + " s"), el("td", { class: "num" }, f.speech_s + " s"),
+        el("td", { class: "num" }, f.speech_level_dbfs + " dBFS"), el("td", { class: "num" }, f.snr_db + " dB"), el("td", { class: "num" }, (f.clipping_ratio * 100).toFixed(2) + " %")))));
+    if (a.ok) out.push(el("p", { class: "muted" }, "Agora marca o consentimento e clica em “Criar voz”."));
+    $("#checkOut").replaceChildren(...out);
+  } catch (e) { checkedOk = false; $("#checkOut").replaceChildren(msgBox("bad", "Erro na verificação", [e.message])); }
+  $("#checkBtn").disabled = false; updateCreate();
+});
+
+$("#createBtn").addEventListener("click", async () => {
+  const fd = collectFiles();
+  fd.append("name", $("#vname").value);
+  fd.append("language", $("#lang").value || "pt");
+  fd.append("consent_confirmed", $("#consent").checked ? "true" : "false");
+  fd.append("consent_owner", document.querySelector("input[name=owner]:checked").value);
+  fd.append("authorized_by", $("#authBy").value);
+  $("#createBtn").disabled = true; $("#createState").textContent = "A guardar…"; $("#createOut").innerHTML = "";
+  try {
+    const r = await api("/api/voices", { method: "POST", body: fd });
+    const id = r.voice.voice_id;
+    $("#prepBar").style.display = "block";
+    $("#createState").textContent = "A preparar a voz… (a 1.ª vez carrega o modelo, pode levar alguns minutos)";
+    await refreshVoices(id);
+    const j = await waitJob(r.prepare_job.job_id, (j) => { $("#createState").textContent = j.stage + "…"; $("#prepBar").firstElementChild.style.width = j.status === "done" ? "100%" : "40%"; });
+    $("#prepBar").style.display = "none";
+    if (j.status === "done") {
+      $("#createState").textContent = "";
+      $("#createOut").replaceChildren(msgBox("good", `Voz criada: ${id}`, ["Já podes gerar narrações na secção 4."]));
+    } else {
+      $("#createOut").replaceChildren(msgBox("bad", "A voz foi guardada, mas a preparação falhou", [j.error || "erro desconhecido"]));
+    }
+    await refreshVoices(id); loadCaps();
+  } catch (e) { $("#createState").textContent = ""; $("#createOut").replaceChildren(msgBox("bad", "Não foi possível criar a voz", [e.message])); }
+  updateCreate();
+});
+
+/* ---------------------------------------------------------------- section 2 */
+async function refreshVoices(selectId) {
+  const { voices } = await api("/api/voices");
+  const box = $("#voices"); const sel = $("#voiceSel");
+  const prev = selectId || sel.value;
+  sel.innerHTML = "";
+  if (!voices.length) { box.textContent = "Ainda não há vozes."; sel.append(el("option", { value: "" }, "— cria uma voz na secção 1 —")); return; }
+  box.replaceChildren(...voices.map((v) => el("div", { class: "voice-row" },
+    el("span", { class: "name" }, v.name), el("code", {}, v.voice_id),
+    el("button", { onclick: () => navigator.clipboard.writeText(v.voice_id) }, "Copiar ID"),
+    el("span", { class: "pill" }, v.status), el("span", { class: "pill" }, `qualidade: ${v.quality}`),
+    el("span", { class: "pill" }, `${v.speech_seconds} s de fala`),
+    el("audio", { controls: "", preload: "none", src: audioUrl(`/api/voices/${v.voice_id}/reference.wav`), style: "height:32px" }),
+    el("button", { onclick: async () => { if (confirm(`Apagar a voz "${v.name}" (${v.voice_id})? Isto não se pode desfazer.`)) { await api(`/api/voices/${v.voice_id}`, { method: "DELETE" }); refreshVoices(); } } }, "Apagar"))));
+  for (const v of voices) sel.append(el("option", Object.assign({ value: v.voice_id }, v.voice_id === prev ? { selected: "" } : {}), `${v.name} (${v.voice_id})`));
+}
+
+/* ---------------------------------------------------------------- section 4 */
+const updChars = () => { $("#chars").textContent = `${$("#text").value.length} caracteres`; };
+$("#text").addEventListener("input", updChars);
+
+$("#genBtn").addEventListener("click", async () => {
+  const voice_id = $("#voiceSel").value;
+  if (!voice_id) { $("#genOut").replaceChildren(msgBox("bad", "Cria ou escolhe uma voz primeiro.")); return; }
+  const style = (document.querySelector("input[name=style]:checked") || {}).value;
+  $("#genBtn").disabled = true; $("#genOut").innerHTML = ""; $("#genBar").style.display = "block";
+  const bar = $("#genBar").firstElementChild; bar.style.width = "3%";
+  try {
+    const job = await api("/api/generate", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ voice_id, text: $("#text").value, style, language: $("#lang").value }) });
+    const j = await waitJob(job.job_id, (j) => {
+      const p = j.progress || {}; const pct = p.total ? Math.max(5, (100 * p.done) / p.total) : 3;
+      bar.style.width = pct + "%";
+      $("#genState").textContent = `${j.stage}${p.total ? ` (${p.done}/${p.total} frases)` : ""}…`;
+    });
+    $("#genBar").style.display = "none"; $("#genState").textContent = "";
+    if (j.status !== "done") throw new Error(j.error || "falhou");
+    const r = j.result;
+    const out = [
+      el("audio", { class: "out", controls: "", src: audioUrl(r.audio_url) }),
+      el("div", { class: "row" },
+        el("a", { href: audioUrl(r.audio_url + "?download=true"), download: `${j.job_id}.wav` }, "Descarregar WAV"),
+        el("span", { class: "muted" }, `${r.duration_s} s · gerado em ${r.generation_seconds} s · job ${j.job_id}`),
+        el("button", { onclick: (ev) => evaluate(j.job_id, ev.target) }, "Avaliar")),
+      el("div", { id: "evalOut" }),
+    ];
+    if (r.warnings.length) out.push(msgBox("warn", "Avisos", r.warnings));
+    $("#genOut").replaceChildren(...out);
+    loadCaps();
+  } catch (e) { $("#genBar").style.display = "none"; $("#genState").textContent = ""; $("#genOut").replaceChildren(msgBox("bad", "Erro na geração", [e.message])); }
+  $("#genBtn").disabled = false;
+});
+
+async function evaluate(jobId, btn) {
+  btn.disabled = true; $("#evalOut").replaceChildren(el("p", { class: "muted" }, "A avaliar… (semelhança e transcrição)"));
+  try {
+    const job = await api("/api/evaluate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ job_id: jobId }) });
+    const j = await waitJob(job.job_id);
+    if (j.status !== "done") throw new Error(j.error || "falhou");
+    const m = j.result.metrics;
+    const card = (v, l) => el("div", { class: "metric" }, el("b", {}, v ?? "—"), el("span", {}, l));
+    const out = [el("div", { class: "metrics" },
+      card(m.speaker_similarity != null ? `${m.speaker_similarity} (${m.speaker_similarity_label})` : null, "semelhança com a tua voz"),
+      card(m.wer != null ? `${Math.round(m.wer * 100)} %` : null, "erro de palavras (WER)"),
+      card(m.words_per_minute, "palavras por minuto"),
+      card(m.loudness_lufs != null ? `${m.loudness_lufs} LUFS` : null, "volume"))];
+    if (m.transcript) out.push(el("p", { class: "muted" }, "Transcrição: ", el("em", {}, m.transcript)));
+    if (j.result.warnings.length) out.push(msgBox("warn", "Avisos", j.result.warnings));
+    $("#evalOut").replaceChildren(...out);
+  } catch (e) { $("#evalOut").replaceChildren(msgBox("bad", "Erro na avaliação", [e.message])); }
+  btn.disabled = false;
+}
+
+(async () => {
+  updChars();
+  if (!TOKEN) return;
+  try { await Promise.all([loadCaps(), loadScript(), refreshVoices()]); }
+  catch (e) { $("#auth").textContent = "Não foi possível falar com o servidor local: " + e.message; $("#auth").style.display = "block"; }
+})();
+</script>
+</body>
+</html>

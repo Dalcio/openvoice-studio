@@ -1,0 +1,18 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+uv.lock
+# never commit voices or generated audio
+*.wav
+*.mp3
+*.m4a
+*.webm
+voices/
+outputs/
+.env

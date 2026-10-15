@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>OpenVoice Studio compared with ElevenLabs</title>
+<style>
+  html, body { margin: 0; width: 1280px; height: 720px; overflow: hidden; }
+  body {
+    background: radial-gradient(900px 600px at 100% 100%, #0f3d36 0%, rgba(15,61,54,0) 60%), #0b0e14;
+    color: #eef1f5; font-family: "Segoe UI", system-ui, -apple-system, Roboto, sans-serif;
+  }
+  .wrap { padding: 56px 80px 0; }
+  .kicker { font-size: 18px; letter-spacing: .18em; text-transform: uppercase; color: #3ccfae; font-weight: 600; }
+  h1 { font-size: 46px; margin: 10px 0 30px; letter-spacing: -0.01em; font-weight: 700; }
+  table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 23px; }
+  th, td { padding: 14px 22px; text-align: left; border-bottom: 1px solid #222b37; }
+  th { font-size: 17px; letter-spacing: .12em; text-transform: uppercase; color: #8b97a8; font-weight: 600; }
+  th.ovs, td.ovs { background: rgba(60,207,174,.08); }
+  th.ovs { color: #3ccfae; border-top-left-radius: 14px; border-top-right-radius: 14px; }
+  td.label { color: #8b97a8; width: 26%; }
+  td.ovs { color: #ffffff; font-weight: 600; }
+  td.el { color: #c9d1dc; }
+  tr:last-child td.ovs { border-bottom-left-radius: 14px; border-bottom-right-radius: 14px; }
+  .note { position: absolute; left: 80px; bottom: 30px; font-size: 16px; color: #6f7b8c; }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="kicker">An honest comparison</div>
+    <h1>OpenVoice Studio and ElevenLabs</h1>
+    <table>
+      <tr><th></th><th class="ovs">OpenVoice Studio</th><th>ElevenLabs</th></tr>
+      <tr><td class="label">Where it runs</td><td class="ovs">On your own computer</td><td class="el">In the cloud</td></tr>
+      <tr><td class="label">Voice cloning</td><td class="ovs">Free</td><td class="el">Paid plans only</td></tr>
+      <tr><td class="label">Your recordings</td><td class="ovs">Never leave your machine</td><td class="el">Uploaded to their servers</td></tr>
+      <tr><td class="label">Source code</td><td class="ovs">Open source, MIT license</td><td class="el">Proprietary</td></tr>
+      <tr><td class="label">Languages</td><td class="ovs">23</td><td class="el">74</td></tr>
+      <tr><td class="label">Speed</td><td class="ovs">Slower on a laptop CPU, fast on a GPU</td><td class="el">Fast</td></tr>
+      <tr><td class="label">Naturalness</td><td class="ovs">Good, best with a clean recording</td><td class="el">Excellent</td></tr>
+    </table>
+  </div>
+  <div class="note">ElevenLabs details from elevenlabs.io/pricing on 15 October 2026.</div>
+</body>
+</html>

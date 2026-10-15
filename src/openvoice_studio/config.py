@@ -1,7 +1,7 @@
 """Paths, token and persistent settings.
 
 Everything lives in one data directory (override with OVS_HOME):
-  Windows  %LOCALAPPDATA%\\OpenVoiceStudio
+  Windows  %USERPROFILE%\\.openvoice-studio
   macOS    ~/Library/Application Support/OpenVoiceStudio
   Linux    $XDG_DATA_HOME/openvoice-studio (default ~/.local/share/openvoice-studio)
 """
@@ -25,7 +25,10 @@ def data_dir() -> Path:
     if env := os.environ.get("OVS_HOME"):
         base = Path(env).expanduser()
     elif sys.platform == "win32":
-        base = Path(os.environ.get("LOCALAPPDATA", Path.home() / "AppData" / "Local")) / "OpenVoiceStudio"
+        # Not %LOCALAPPDATA%: packaged (MSIX) apps such as Claude Desktop get a private, virtualised
+        # AppData, so a server started from inside the app and one started from a terminal would
+        # otherwise see different tokens and voices.
+        base = Path.home() / ".openvoice-studio"
     elif sys.platform == "darwin":
         base = Path.home() / "Library" / "Application Support" / "OpenVoiceStudio"
     else:

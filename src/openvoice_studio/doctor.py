@@ -100,6 +100,16 @@ def run_doctor() -> dict:
 
     _check(checks, "claude_code_mcp", False, claude_code_mcp)
 
+    def install_location():
+        exe = sys.executable.lower()
+        if sys.platform == "win32" and "\\packages\\" in exe and "\\localcache\\" in exe:
+            return False, ("instalado a partir de uma app empacotada (MSIX): o Python ficou no AppData privado dessa app. "
+                           "Funciona dentro dela (ex.: Claude Desktop), mas não num terminal normal; para isso, "
+                           "reinstala a partir de um PowerShell normal.")
+        return True, sys.prefix
+
+    _check(checks, "install_location", False, install_location)
+
     errors = [f"{k}: {v['detail']}" for k, v in checks.items() if v["required"] and not v["ok"]]
     warnings = [f"{k}: {v['detail']}" for k, v in checks.items() if not v["required"] and not v["ok"]]
     return {

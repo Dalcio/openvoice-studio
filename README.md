@@ -65,7 +65,9 @@ The MCP server is a thin client of the local HTTP server and starts it on demand
 
 The API listens on `127.0.0.1:8765` only. Requests must carry the token from `<data dir>/token` as `Authorization: Bearer <token>`. Endpoints: `GET /api/health`, `GET /api/capabilities`, `GET|POST /api/voices`, `POST /api/voices/check`, `DELETE /api/voices/{id}`, `POST /api/generate`, `GET /api/jobs/{id}?wait=10`, `GET /api/audio/{job_id}.wav`, `POST /api/evaluate`. Requests addressed to any other `Host` are rejected, which blocks DNS rebinding.
 
-The data directory is `%LOCALAPPDATA%\OpenVoiceStudio`, `~/Library/Application Support/OpenVoiceStudio`, or `~/.local/share/openvoice-studio`. Override it with `OVS_HOME`.
+The data directory is `%USERPROFILE%\.openvoice-studio`, `~/Library/Application Support/OpenVoiceStudio`, or `~/.local/share/openvoice-studio`. Override it with `OVS_HOME`.
+
+On Windows, if you install from inside a packaged app such as Claude Desktop, Windows keeps the uv tool environment in that app's private AppData. It then works inside the app but not from a regular terminal. `doctor` warns about this. To fix it, reinstall from a normal PowerShell window.
 
 ## Responsible use
 

@@ -22,6 +22,15 @@ if (-not (Get-Command ffmpeg -ErrorAction SilentlyContinue)) {
     Write-Warning "ffmpeg not found. Install it with: winget install --id Gyan.FFmpeg -e   (then open a new terminal)"
 }
 
+# Windows cannot replace a Python that is running: a live server or MCP client would leave the
+# tool environment half-removed. Stop early instead.
+$running = Get-CimInstance Win32_Process -ErrorAction SilentlyContinue |
+    Where-Object { $_.ProcessId -ne $PID -and $_.CommandLine -match "openvoice-studio(\.exe)?`"?\s+(ui|serve|mcp)\b|openvoice_studio\s+(ui|serve|mcp)\b" }
+if ($running) {
+    $ids = ($running | ForEach-Object { $_.ProcessId }) -join ", "
+    throw "OpenVoice Studio is running (PID $ids). Stop the server (Ctrl+C) and close Claude sessions/apps that use its MCP server, then run the installer again."
+}
+
 Step "Installing openvoice-studio from $Source (Python $Python)"
 uv tool install --force --python $Python --reinstall-package openvoice-studio $Source
 if ($LASTEXITCODE -ne 0) { throw "uv tool install failed" }

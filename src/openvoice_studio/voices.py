@@ -2,9 +2,9 @@
 
 voices/<voice_id>/
   voice.json            metadata, consent record, recording analysis
-  samples/NN.wav        each uploaded/recorded take (24 kHz mono)
-  samples.wav           all takes joined (used for the speaker embedding)
-  reference.wav         cleanest ~10 s window (used as the cloning prompt)
+  samples/NN.wav        each uploaded/recorded take as received (24 kHz mono)
+  samples.wav           all takes cleaned (rumble/noise/level) and joined (speaker embedding)
+  reference.wav         cleanest ~10 s window, long pauses shortened (cloning prompt)
   conds.<engine>.pt     engine cache, rebuilt on demand
 """
 
@@ -142,10 +142,7 @@ class VoiceStore:
             assessment = audio.assess(analyses)
             if not assessment["ok"]:
                 raise ValueError(" ".join(assessment["errors"]))
-            gap = audio.silence(0.3, SR)
-            joined = np.concatenate([np.concatenate([audio.trim_silence(t, SR), gap]) for t in takes])
-            audio.write(vdir / "samples.wav", joined, SR)
-            audio.write(vdir / "reference.wav", audio.best_segment(joined, SR, 10.0), SR)
+            processing = self._derive(vdir)
             voice = {
                 "voice_id": voice_id,
                 "name": name,
@@ -157,9 +154,38 @@ class VoiceStore:
                 "consent": record,
                 "samples": analyses,
                 "assessment": assessment,
+                "processing": processing,
             }
             (vdir / "voice.json").write_text(json.dumps(voice, ensure_ascii=False, indent=2), encoding="utf-8")
             return voice
         except Exception:
             shutil.rmtree(vdir, ignore_errors=True)
             raise
+
+    @staticmethod
+    def _derive(vdir: Path) -> dict:
+        """Build samples.wav and reference.wav from the raw takes and drop stale engine caches."""
+        cleaned = []
+        with tempfile.TemporaryDirectory() as tmp:
+            for take in sorted((vdir / "samples").glob("*.wav")):
+                wav, _ = audio.read(audio.clean_take(take, Path(tmp) / take.name, SR))
+                cleaned.append(audio.trim_silence(wav, SR))
+        gap = audio.silence(0.3, SR)
+        joined = np.concatenate([np.concatenate([c, gap]) for c in cleaned])
+        audio.write(vdir / "samples.wav", joined, SR)
+        reference = audio.best_segment(audio.compress_pauses(joined, SR), SR, 10.0)
+        audio.write(vdir / "reference.wav", reference, SR)
+        for cache in [*vdir.glob("conds.*.pt"), *vdir.glob("embedding.*.npy"), vdir / "selftest.json"]:
+            cache.unlink(missing_ok=True)
+        return {
+            "clean_filter": audio.CLEAN_FILTER,
+            "target_lufs": -20.0,
+            "reference_s": round(len(reference) / SR, 2),
+            "reference_speech_s": audio.analyze(reference, SR)["speech_s"],
+            "rebuilt_at": now_iso(),
+        }
+
+    def rebuild(self, voice_id: str) -> dict:
+        """Re-derive the cloning material from the stored takes (e.g. after processing improvements)."""
+        processing = self._derive(self.path(voice_id))
+        return self.update(voice_id, processing=processing, prepared_engines=[], status="a preparar")

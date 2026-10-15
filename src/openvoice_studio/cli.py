@@ -99,6 +99,11 @@ def cmd_voices(a: argparse.Namespace) -> int:
     from .voices import VoiceStore
 
     store = VoiceStore()
+    if a.rebuild:
+        voice = store.rebuild(a.rebuild)
+        print(f"Voz {a.rebuild} reconstruída a partir das gravações guardadas: {json.dumps(voice['processing'], ensure_ascii=False)}")
+        print("O motor prepara-a de novo na próxima geração.")
+        return 0
     voices = [store.summary(v) for v in store.list()]
     if a.json:
         print(json.dumps({"voices": voices}, indent=2, ensure_ascii=False))
@@ -160,6 +165,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     s = sub.add_parser("voices", help="listar vozes")
     s.add_argument("--json", action="store_true")
+    s.add_argument("--rebuild", metavar="VOICE_ID", help="refazer a referência de clonagem a partir das gravações guardadas")
     s.set_defaults(fn=cmd_voices)
 
     s = sub.add_parser("generate", help="gerar narração pela linha de comandos")

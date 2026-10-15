@@ -53,6 +53,16 @@ def test_analysis_detects_speech_and_clipping():
     assert audio.analyze(np.clip(tone * 10, -1, 1), sr)["clipping_ratio"] > 0.1
 
 
+def test_compress_pauses_shortens_long_silences():
+    sr = 24000
+    t = np.arange(sr) / sr
+    tone = 0.3 * np.sin(2 * np.pi * 200 * t).astype(np.float32)
+    wav = np.concatenate([tone, audio.silence(2.0, sr) + 1e-4, tone])
+    out = audio.compress_pauses(wav, sr, max_pause_s=0.35, keep_s=0.25)
+    assert 2.1 < len(out) / sr < 2.5
+    assert audio.analyze(out, sr)["speech_s"] >= 1.8
+
+
 def test_selftest_end_to_end():
     from openvoice_studio.selftest import run_selftest
 

@@ -221,6 +221,49 @@ def split_speech(wav: np.ndarray, sr: int, max_s: float = 8.0, min_s: float = 1.
     return chunks or [wav]
 
 
+CLEAN_FILTER = "highpass=f=80,afftdn=nr=12:nf=-50:tn=1"
+
+
+def clean_take(src: Path, dst: Path, sr: int = 24000, target_lufs: float = -20.0) -> Path:
+    """Prepare a home recording for cloning: cut rumble below 80 Hz, reduce steady background noise
+    (ffmpeg afftdn, moderate 12 dB so the voice keeps its timbre) and bring it to a normal level.
+    The engines copy the acoustics of the reference, so noise and very low levels hurt similarity."""
+    src, dst = Path(src), Path(dst)
+    ff = ffmpeg_path()
+    if ff:
+        cmd = [ff, "-nostdin", "-hide_banner", "-loglevel", "error", "-y", "-i", str(src),
+               "-af", CLEAN_FILTER, "-ac", "1", "-ar", str(sr), "-c:a", "pcm_s16le", str(dst)]
+        if subprocess.run(cmd, capture_output=True, text=True).returncode != 0 or not dst.exists():
+            raise AudioError(f"Falhou a limpeza do áudio '{src.name}'.")
+        wav, _ = read(dst)
+    else:
+        wav, in_sr = read(src)
+        wav = resample(wav, in_sr, sr)
+    write(dst, normalize(wav, sr, target_lufs=target_lufs, peak_dbfs=-1.0), sr)
+    return dst
+
+
+def compress_pauses(wav: np.ndarray, sr: int, max_pause_s: float = 0.35, keep_s: float = 0.25) -> np.ndarray:
+    """Shorten pauses longer than max_pause_s to keep_s, so a 10 s reference window holds more speech."""
+    db = frame_db(wav, sr)
+    mask = speech_mask(db)
+    n = int(sr * FRAME_S)
+    keep_frames = max(1, int(keep_s / FRAME_S))
+    out, i = [], 0
+    while i < len(mask):
+        j = i
+        while j < len(mask) and mask[j] == mask[i]:
+            j += 1
+        seg = wav[i * n : j * n]
+        if not mask[i] and (j - i) * FRAME_S > max_pause_s:
+            half = keep_frames * n // 2
+            seg = np.concatenate([seg[:half], seg[-half:]]) if half else seg[:0]
+        out.append(seg)
+        i = j
+    out.append(wav[len(mask) * n :])
+    return np.concatenate(out) if out else wav
+
+
 def loudness_lufs(wav: np.ndarray, sr: int) -> float | None:
     try:
         import pyloudnorm

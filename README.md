@@ -40,6 +40,7 @@ The installer uses [uv](https://docs.astral.sh/uv/) to install the CLI into an i
 ```bash
 openvoice-studio ui            # opens http://127.0.0.1:8765/#token=… in your browser
 openvoice-studio voices        # list voices and their voice_id
+openvoice-studio voices --rebuild <voice_id>   # redo the cloning reference from the stored takes
 openvoice-studio generate --voice <voice_id> --text "Olá!" --style documental --out ola.wav
 openvoice-studio doctor        # environment check (JSON, "ok": true|false)
 openvoice-studio selftest      # end-to-end pipeline test without models (JSON)
